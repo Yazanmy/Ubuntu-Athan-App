@@ -60,7 +60,7 @@ class AthanApplication(Gtk.Application):
         self.window = None
         self.indicator = None
         self.settings = get_settings()
-        self.prayer_manager = PrayerTimesManager()
+        self.prayer_manager = PrayerTimesManager(method=self.settings.calculation.method)
         self._force_quit = False
         self._quit_complete = False
         

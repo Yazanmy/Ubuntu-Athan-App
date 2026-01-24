@@ -39,7 +39,7 @@ class MainWindow(Gtk.ApplicationWindow):
         
         self.app = application
         self.settings = get_settings()
-        self.prayer_manager = PrayerTimesManager()
+        self.prayer_manager = PrayerTimesManager(method=self.settings.calculation.method)
         self.player = AudioPlayer(on_state_change=self._on_playback_state_change)
         
         self._countdown_timer_id: Optional[int] = None

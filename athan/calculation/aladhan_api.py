@@ -16,12 +16,54 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urlencode, quote
 import pytz
 
+from .prayer_times import CalculationMethod
+
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = os.path.expanduser("~/.cache/athan-app")
 CACHE_FILE = os.path.join(CACHE_DIR, "prayer_times_cache.json")
 ALADHAN_API_URL = "https://api.aladhan.com/v1"
 NOMINATIM_API_URL = "https://nominatim.openstreetmap.org"
+
+# Mapping between CalculationMethod enum and Aladhan API method IDs
+METHOD_ID_MAPPING = {
+    CalculationMethod.JAFARI: 0,          # Shia Ithna-Ansari
+    CalculationMethod.KARACHI: 1,         # University of Islamic Sciences, Karachi
+    CalculationMethod.ISNA: 2,            # Islamic Society of North America (ISNA)
+    CalculationMethod.MWL: 3,             # Muslim World League
+    CalculationMethod.MAKKAH: 4,          # Umm Al-Qura University, Makkah
+    CalculationMethod.EGYPT: 5,           # Egyptian General Authority of Survey
+    CalculationMethod.TEHRAN: 7,          # Institute of Geophysics, University of Tehran
+    CalculationMethod.GULF: 8,            # Gulf Region
+    CalculationMethod.KUWAIT: 9,          # Kuwait
+    CalculationMethod.QATAR: 10,          # Qatar
+    CalculationMethod.SINGAPORE: 11,      # Majlis Ugama Islam Singapura
+    CalculationMethod.FRANCE: 12,         # Union Organization Islamic de France
+    CalculationMethod.TURKEY: 13,         # Diyanet İşleri Başkanlığı, Turkey
+    CalculationMethod.RUSSIA: 14,         # Spiritual Administration of Muslims of Russia
+    CalculationMethod.MOONSIGHTING: 15,   # Moonsighting Committee Worldwide
+    CalculationMethod.DUBAI: 16,          # Dubai
+    CalculationMethod.JAKIM: 17,          # Jabatan Kemajuan Islam Malaysia (JAKIM)
+    CalculationMethod.TUNISIA: 18,        # Tunisia
+    CalculationMethod.ALGERIA: 19,        # Algeria
+    CalculationMethod.KEMENAG: 20,        # Kementerian Agama Republik Indonesia
+    CalculationMethod.MOROCCO: 21,        # Morocco
+    CalculationMethod.PORTUGAL: 22,       # Comunidade Islamica de Lisboa
+    CalculationMethod.JORDAN: 23,         # Ministry of Awqaf, Islamic Affairs and Holy Places, Jordan
+}
+
+
+def get_method_id(calculation_method: CalculationMethod) -> int:
+    """
+    Convert CalculationMethod enum to Aladhan API method ID.
+
+    Args:
+        calculation_method: The CalculationMethod enum value
+
+    Returns:
+        The corresponding Aladhan API method ID
+    """
+    return METHOD_ID_MAPPING.get(calculation_method, 2)  # Default to ISNA if not found
 
 
 class GeocodingAPI:
@@ -162,14 +204,15 @@ class AladhanAPI:
         23: "Ministry of Awqaf, Islamic Affairs and Holy Places, Jordan",        
     }
     
-    def __init__(self, method: int = 2):
+    def __init__(self, method: CalculationMethod = CalculationMethod.ISNA):
         """
         Initialize the API client.
         
         Args:
-            method: Calculation method (default 2 = ISNA)
+            method: Calculation method (default ISNA)
         """
-        self.method = method
+        self.method = get_method_id(method)
+        self.method_enum = method
         self._ensure_cache_dir()
     
     def _ensure_cache_dir(self):
@@ -380,7 +423,7 @@ class PrayerTimesManager:
     Combines geocoding, API access, and caching.
     """
     
-    def __init__(self, method: int = 2):
+    def __init__(self, method: CalculationMethod = CalculationMethod.ISNA):
         self.api = AladhanAPI(method=method)
         self.cache = PrayerTimesCache()
     
